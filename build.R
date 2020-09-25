@@ -1,6 +1,5 @@
-# Setting up
+# Script drives entire project
 
 setwd("~/R/Football-analytics/")
 
-# Load packages
-library(tidyverse)
+source("setup.R")
