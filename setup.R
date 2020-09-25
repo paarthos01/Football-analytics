@@ -1,6 +1,5 @@
 # Setting up
 
-setwd("~/R/Football-analytics/")
-
 # Load packages
 library(tidyverse)
+  
