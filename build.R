@@ -3,3 +3,4 @@
 setwd("~/R/Football-analytics/")
 
 source("setup.R")
+source("data/explore.R")
