@@ -13,7 +13,7 @@ Data dictionary:
 - deep: TBD
 - deep_allowed: TBD
 - scored: Actual goals scored
-- missed: Actual goals conceded
+- condeded: Actual goals conceded
 - xpts: Expected points
 - result: Win, loss or draw
 - date: date and time of match
