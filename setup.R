@@ -1,18 +1,14 @@
-# Setting up
-
-# Load packages
-library(tidyverse)
-library(anytime)
-library(lubridate)
+####---SETTING UP THE DATA SETS - INCL CLEANING
+# Paarth Arora, Oct 1 2020
 
 # Read data
 team_data <- read_csv("data/epl2020.csv")
 player_data <- read_csv("data/players_1920_fin.csv")
 missing_team_data <- read_csv("data/missing-epl2020.csv")
 
-# Clean data
+# CLEANING THE ORIGINAL DATA (only part of season)
 team_data <- team_data %>%  
-  select(-X1, -matchDay) %>% # removing the first col because it is not helpful, matchDay
+  select(-X1, -matchDay, -matchtime) %>% # removing the first col because it is not helpful, matchDay
   rename(Referee = Referee.x, # renaming to be consistent (w/o x)
          HS = HS.x, 
          HST = HST.x,
@@ -29,11 +25,17 @@ team_data <- team_data %>%
          B365H = B365H.x,
          B365D = B365D.x,
          B365A = B365A.x,
-         conceded = missed)
-team_data$date <- as.Date(team_data$date)
+         conceded = missed,
+         losses = loses)
 
-str(team_data)
+team_data$date <- as.Date(team_data$date) # convert to date
 
+n <- 2 # adding a match_id to original data
+match_id <- rep(1:288, each=n)
+team_data <- team_data %>% 
+  mutate(match_id)
+
+### CLEANING THE MISSING GAME DATA 
 # Tidy the missing EPL 2019-20 data to same format as existing data
 missing_team_data <- missing_team_data %>% 
   mutate(match_id = row_number()) %>% # add match id for each row
@@ -59,28 +61,38 @@ missing_team_data$conceded <- ifelse(missing_team_data$h_a == "h",
                                    ifelse(missing_team_data$h_a == "a", 
                                           missing_team_data$FTHG, NA))
 
-# adding new cols: RESULT, PTS, 
+missing_team_data$date <- 
+  as.Date(missing_team_data$Date, format = "%d/%m/%y") # converting to date format
+
+# adding new cols and cleaning old ones
 missing_team_data <- missing_team_data %>% 
   group_by(match_id) %>% 
   mutate(result = case_when( # adding the result col
-    FTHG == FTAG ~ "d",
+    FTHG == FTAG ~ "d", 
     h_a == "h" & FTHG > FTAG ~ "w",
     h_a == "h" & FTHG < FTAG ~ "l",
     h_a == "a" & FTHG > FTAG ~ "l",
     h_a == "a" & FTHG < FTAG ~ "w",
     TRUE ~ "NA")) %>% 
-  ungroup() 
-
-missing_team_data <- missing_team_data %>% 
-    mutate(pts = case_when( # adding the points col
+  ungroup() %>% 
+  mutate(pts = case_when( # adding the points col
     result == "w" ~ 3,
     result == "d" ~ 1,
     result == "l" ~ 0,
     TRUE ~ 0)) %>% 
   mutate(HtrgPerc = HST/HS, # adding shots on target cols
-         AtrgPerc = AST/AS)
+         AtrgPerc = AST/AS) %>% 
+  select(-Date, -Time, -FTHG, -FTAG, -FTR) # removing redundant cols
 
-missing_team_data$date <- 
-  as.Date(missing_team_data$Date, format = "%d/%m/%y") # converting to date col
+missing_team_data <- missing_team_data %>% 
+  mutate(wins = case_when(result == "w" ~ 1, TRUE ~ 0),
+         draws = case_when(result == "d" ~ 1, TRUE ~ 0),
+         losses = case_when(result == "l" ~ 1, TRUE ~ 0))
 
+#### MERGING THE DATASETS
+full_2020_data <- bind_rows(team_data, missing_team_data)
 
+# adding a match_id to merged data
+n <- 2 
+match_id <- rep(1:380, each=n)
+full_2020_data$match_id <- match_id
