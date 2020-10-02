@@ -9,4 +9,4 @@ library(lubridate)
 
 # run scripts
 source("setup.R")
-source("data/explore.R")
+# source("analysis/explore.R")
