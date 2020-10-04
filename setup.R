@@ -4,6 +4,7 @@
 # Read data
 team_data <- read_csv("data/full-epl2020.csv")
 player_data <- read_csv("data/players_1920_fin.csv")
+rankings_data <- read_csv("data/rankings-epl2020.csv")
 #missing_team_data <- read_csv("data/missing-epl2020.csv")
 
 # CLEANING THE FULL SEASON DATA
@@ -90,7 +91,8 @@ team_data <- team_data %>%
          yellow_cards = ifelse(h_a == "h", HY, AY),
          red_cards = ifelse(h_a == "h", HR, AR),
          fouls = ifelse(h_a == "h", HF, AF),
-         corners = ifelse(h_a == "h", HC, AC)) %>% 
+         corners = ifelse(h_a == "h", HC, AC),
+         shot_accuracy = ifelse(h_a == "h", HtrgPerc, AtrgPerc)) %>% 
   mutate(h_a2 = h_a,
          team2 = team) %>% 
   group_by(match_id) %>% 
@@ -102,6 +104,12 @@ team_data <- team_data %>%
   mutate(opposition = ifelse(h_a == "h", a, h)) %>% # Adding opposition col
   ungroup() %>% 
   select(-h, -a) # removing cols
+
+# Merging with EPL 2019-2020 final rankings table
+team_data <- team_data %>% 
+  full_join(rankings_data, by = c("opposition" = "team")) %>% 
+  rename(opposition_rank = rank,
+         opposition_rank_group = rank_group)
 
 # Write to CSV
 #write.csv(team_data, file = "data/cleaned-2020-data.csv")
