@@ -2,8 +2,6 @@
 
 # 1000 goals, 9000 shots, 3000 shots on target ~ whole season
 full_2020_data %>% 
-  mutate(shots = ifelse(h_a == "h", HS, AS)) %>% 
-  mutate(shots_target = ifelse(h_a == "h", HST, AST)) %>% 
   select(scored, shots, shots_target) %>%
   summarise(sum_goals = sum(scored),
             sum_shots = sum(shots),
@@ -21,6 +19,19 @@ full_2020_data %>%
        caption = "Source: EPL 2019-2020 season data.",
        x = "Team",
        y = "Total points")
+
+# Home teams score more goals and concede less
+full_2020_data %>% 
+  group_by(h_a) %>% 
+  summarise(scored = sum(scored), conceded = sum(conceded)) %>% 
+  ggplot(aes(x = h_a, y = scored)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(title = "Home teams score more goals and concede less.",
+       subtitle = "All teams, EPL 2019-2020.",
+       caption = "Source: EPL 2019-2020 season data.",
+       x = "Home or away",
+       y = "Total goals scored")
 
 # Most teams experienced 'Home advantage'
 full_2020_data %>% 
@@ -53,10 +64,18 @@ Crystal Palace",
        fill = "Home / away")
 
 ## LINEAR REGRESSION - GOALS SCORED
+# Home teams much more likely to score more goals than away
+lm_goals0 <- full_2020_data %>% 
+  select(shots_target, h_a, scored)
+
+model_goals0 <- lm(scored ~ shots_target + h_a + shots_target:h_a, data = lm_goals0) 
+#contrasts(lm_goals0$h_a) 
+summary(model_goals0)$coefficients 
+summary(model_goals0)$r.squared 
+
 # Low correlation between no of shots and no of goals
 lm_goals1 <- full_2020_data %>% 
   mutate(shots = ifelse(h_a == "h", HS, AS)) %>% 
-  select(shots, scored) %>% 
   select(shots, scored)
 
 model_goals1 <- lm(scored ~ shots, data = lm_goals1)
@@ -196,5 +215,10 @@ lm_goals2 %>%
   geom_function(fun = model_fn2, colour = "blue")
 
 ## LOGISTIC REGRESSION
+
+library("foreign")
+library("MASS")
+library("Hmisc")
+library("reshape2")
 
 
